@@ -108,6 +108,10 @@ class DefineLayerId:
         parent_layer_id: str | None = None,
         directories: str = "",
     ) -> tuple[str]:
+        # Handle None case for parent_layer_id
+        if parent_layer_id is None:
+            parent_layer_id = ""
+        
         layer_id_dir = pathlib.Path(parent_layer_id).parent
         if directories:
             layer_id_dir = layer_id_dir / directories
@@ -169,7 +173,7 @@ class CreateLayer:
         set_edit_target: bool = True,
         parent_layer_id: str | None = None,
         create_or_insert: bool = True,
-    ) -> str:
+    ) -> tuple[str]:
         if not self.enable_this_node:  # noqa
             return ("",)
         payload = {
@@ -314,7 +318,9 @@ class GetLayers:
         regex_filter: str = "",
     ) -> tuple[list[str], list[str], bool]:
         if not self.enable_this_node:  # noqa
-            return ([], [], False)
+            # Return non-empty lists even when disabled to avoid ComfyUI empty list bug
+            return ([""], [""], False)
+        
         layer_types_list = [t.strip() for t in layer_types.split(",")]
         params = {
             "layer_types": layer_types_list,
@@ -334,13 +340,14 @@ class GetLayers:
         check_response_status_code(r)
 
         layer_ids: list[str] = []
-        layer_types: list[str] = []
+        layer_types_output: list[str] = []
 
         layers = json.loads(r.text).get("layers", [])
         if not layers and crash_if_not_exist:
             raise ValueError("No layers found. Please check the parameters of your node")
         if not layers and not crash_if_not_exist:
-            return (layer_ids, layer_types, False)
+            # Return non-empty lists with placeholder values to avoid ComfyUI empty list bug
+            return ([""], [""], False)
 
         seen: set[str] = set()
         layers_to_process = collections.deque(layers)
@@ -353,11 +360,17 @@ class GetLayers:
             seen.add(layer_id)
             if not regex_filter or re.match(regex_filter, layer_id):
                 layer_ids.append(layer_id)
-                layer_types.append(stringify_layer_type(layer["layer_type"]))
+                layer_types_output.append(stringify_layer_type(layer["layer_type"]))
             if sublayers:
                 layers_to_process.extend(layer["children"])
 
-        return (layer_ids, layer_types, bool(layer_ids))
+        # Ensure we never return empty lists to avoid ComfyUI execution bug
+        if not layer_ids:
+            layer_ids = [""]
+            layer_types_output = [""]
+            return (layer_ids, layer_types_output, False)
+
+        return (layer_ids, layer_types_output, bool(layer_ids))
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):  # noqa N802

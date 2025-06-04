@@ -108,7 +108,7 @@ class IngestTexture:
                 headers=HEADER_LSS_REMIX_VERSION_1_0,
             )
             check_response_status_code(r)
-            output_folder = json.loads(r.text).get("asset_path", {})
+            output_folder = json.loads(r.text).get("directory_path", {})
 
         full_output_folder, filename, _counter, _subfolder, _filename_prefix = folder_paths.get_save_image_path(
             texture_name, folder_paths.get_output_directory(), texture[0].shape[1], texture[0].shape[0]
