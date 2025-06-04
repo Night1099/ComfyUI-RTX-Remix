@@ -150,7 +150,7 @@ class GetTextures:
             payload["asset_hashes"] = [item.strip() for item in asset_hashes.split(",")]
         if texture_types is not None:
             payload["texture_types"] = [item.strip() for item in texture_types.split(",")]
-        if layer_id is not None:
+        if layer_id is not None and layer_id.strip():
             payload["layer_identifier"] = posix(layer_id)
 
         address, port = self.context  # noqa
@@ -350,7 +350,7 @@ class TextureTypeToUSDAttribute:
             headers=HEADER_LSS_REMIX_VERSION_1_0,
         )
         check_response_status_code(r)
-        result_texture_types = json.loads(r.text).get("asset_paths", [])
+        result_texture_types = json.loads(r.text).get("prim_paths", [])
 
         if not result_texture_types:
             raise ValueError(

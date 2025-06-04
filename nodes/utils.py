@@ -53,12 +53,17 @@ def check_response_status_code(response: requests.Response) -> None:
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as err:
-        r = response.json()
-        _logger.error(f"Requested URL: {response.url}\n" f"Raw Response: \n\n{pprint.pformat(r)}\n")  # noqa
+        # Only try to parse JSON when there's an error
+        try:
+            r = response.json()
+            _logger.error(f"Requested URL: {response.url}\n" f"Raw Response: \n\n{pprint.pformat(r)}\n")  # noqa
+        except (ValueError, requests.exceptions.JSONDecodeError):
+            # If response is not JSON, just log the text
+            _logger.error(f"Requested URL: {response.url}\n" f"Raw Response: \n\n{response.text}\n")  # noqa
         raise err
 
 
 def posix(layer_id: str | None) -> str:
     if layer_id is None:
-        return layer_id
+        return ""
     return pathlib.Path(layer_id).as_posix()
