@@ -41,28 +41,18 @@ You should see RTX Remix nodes:
 
 ## Example Workflows and Templates
 
-To help you get started, we have included the following templates and workflow examples in the ./workflows folder.
+To help you get started, we have included the following template and workflow example in the ./workflows folder.
 
 Simple to Use:
 1. Open RTX Remix
 1. Open your project
 1. Select the objects with textures you want to upscale
-1. Launch ComfyUI, load a graph using the .png file and hit "Queue Prompt"
+1. Launch ComfyUI, load a graph using the .JSON file and hit "Queue Prompt"
 
 Note: for subsequent runs: disable the "Create Layer" portion of the graph since it will already exist.
 
-### Texture workflow template
-`./workflows/rtx_remix_texture_workflow_template.png`
-
-![Template](workflows/rtx_remix_texture_workflow_template.png "Texture Workflow Template")
-
-
-Use this graph to start your own ai workflow and modify textures in RTX Remix.
-
 ### Plug n Play PBRify_Remix workflow
-`./workflows/rtx_remix_pbrify_remix_workflow.png`
-
-![Template](workflows/rtx_remix_pbrify_remix_workflow.png "PBRify_Remix Workflow")
+`./workflows/rtx_remix_pbrify_workflow.json`
 
 An upscaling workflow to upscale the diffuse textures in your mod. This will create Normal, Roughness and Height maps using [PBRify_Remix](https://github.com/Kim2091/PBRify_Remix) 
 
