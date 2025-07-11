@@ -23,6 +23,7 @@ import re
 from urllib.parse import quote_plus, unquote
 
 import requests
+from comfy.comfy_types import IO
 
 from .common import (
     RemixContext,
@@ -536,3 +537,108 @@ class SetEditTarget(_LayerOp):
         )
         check_response_status_code(r)
         return (layer_id,)  # return an output so that you can make sure this executes before other nodes
+
+
+@add_context_input_enabled_and_output
+class CloseProject:
+    """Close the currently open project"""
+
+    @classmethod
+    def INPUT_TYPES(cls):  # noqa N802
+        inputs = get_context_inputs()
+        inputs["optional"] = {
+            "trigger": (IO.ANY, {}),
+        }
+        return inputs
+
+    RETURN_TYPES = ("STRING", IO.ANY)
+    RETURN_NAMES = ("status", "passthrough")
+
+    FUNCTION = "close_project"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = f"{PREFIX_MENU}/{_file_name}"
+
+    def close_project(self, trigger=None) -> tuple[str, any]:
+        if not self.enable_this_node:  # noqa
+            return ("disabled", trigger)
+        address, port = self.context  # noqa
+        r = requests.delete(
+            f"http://{address}:{port}/stagecraft/project",
+            headers=HEADER_LSS_REMIX_VERSION_1_0,
+        )
+        check_response_status_code(r)
+        return ("closed", trigger)
+
+
+@add_context_input_enabled_and_output
+class OpenProject:
+    """Open a project using the specified layer ID"""
+
+    @classmethod
+    def INPUT_TYPES(cls):  # noqa N802
+        inputs = {
+            "required": {
+                "layer_id": ("STRING", {"forceInput": True}),
+            }
+        }
+        return inputs
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("layer_id",)
+
+    FUNCTION = "open_project"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = f"{PREFIX_MENU}/{_file_name}"
+
+    def open_project(self, layer_id: str) -> tuple[str]:
+        if not self.enable_this_node:  # noqa
+            return ("",)
+        address, port = self.context  # noqa
+        r = requests.put(
+            f"http://{address}:{port}/stagecraft/project/{quote_plus(posix(layer_id))}",
+            headers=HEADER_LSS_REMIX_VERSION_1_0,
+        )
+        check_response_status_code(r)
+        return (layer_id,)
+
+
+@add_context_input_enabled_and_output
+class GetLoadedProject:
+    """Get the currently loaded project"""
+
+    @classmethod
+    def INPUT_TYPES(cls):  # noqa N802
+        return get_context_inputs()
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("layer_id",)
+
+    FUNCTION = "get_loaded_project"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = f"{PREFIX_MENU}/{_file_name}"
+
+    def get_loaded_project(self) -> tuple[str]:
+        if not self.enable_this_node:  # noqa
+            return ("",)
+        address, port = self.context  # noqa
+        r = requests.get(
+            f"http://{address}:{port}/stagecraft/project/",
+            headers=HEADER_LSS_REMIX_VERSION_1_0,
+        )
+        check_response_status_code(r)
+        response_data = json.loads(r.text)
+        layer_id = response_data.get("layer_id", "")
+        return (layer_id,)
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):  # noqa N802
+        """
+        Always process the node in case the loaded project in the RTX Remix app changed
+        """
+        return float("nan")
